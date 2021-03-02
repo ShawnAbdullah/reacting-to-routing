@@ -1,171 +1,80 @@
-import { useEffect, useState } from 'react';
-import List from '../List';
+import React, { BrowserRouter, Switch, Route, useState, useEffect } from 'react';
+import Films from './Films';
+import People from './People';
 
-class App extends Component {
-    constructor(props) {
-        super(props)
+const App = () => {
+    const [films, setFilms] = useState([])
+    const [people, setPeople] = useState([])
+    const [loadFilms, setLoadFilms] = useState(false)
+    const [loadPeople, setLoadPeople] = useState(false)
 
-    this.state = {
-        films: [],
-        heightChange: 0,
-        opacityChange: 0,
+    let handleLoadFilms = () => {
+        fetch('https://ghibliapi.herokuapp.com/films')
+        .then(resolve => resolve.json())
+        .then(resolve => setFilms(resolve))
+        
+        setLoadPeople(false)
+        setLoadFilms(true)
     }
 
-    this.slide = this.slide.bind(this);
-    this.slideBack = this.slideBack.bind(this);
-    this.sort = this.sort.bind(this);
-}
-
-componentDidMount() {
-    fetch('https://ghibliapi.herokuapp.com/films/')
-        .then((res) => {
-            return res.json();
-        })
-        .then((data) => {
-            let newData = data.map(item => {
-                // console.log(item);
-                let imageObj = images.find(image => {
-                    return item.id === image.id
-                });
-                if (!!imageObj) item.imageUrl = imageObj.url
-                return item;
-            });
-            // console.log(newData);
-            this.setState({ films: newData });
-        });
-}
-
-slide() {
-
-    //toggle for showing movie info
-    const { open } = this.state
-
-    open ? this.setState({
-        open: false,
-        heightChange: 0,
-        opacityChange: 0
-    }) : this.setState({
-        open: true,
-        heightChange: 100 + '%',
-        opacityChange: 1
-    })
-
-    // console.log(this.state.open);
-}
-
-slideBack() {
-    this.setState({
-        heightChange: 0,
-        opacityChange: 0
-    })
-}
-
-sort(num) {
-    function compareValues(key, order = 'asc') {
-        return function (a, b) {
-            if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
-                // property doesn't exist on either object
-                return 0;
-            }
-
-            //ternary operator to check the type of the key parameter
-            const varA = (typeof a[key] === 'string') ?
-                a[key].toUpperCase() : a[key];
-            const varB = (typeof b[key] === 'string') ?
-                b[key].toUpperCase() : b[key];
-
-            let comparison = 0;
-            if (varA > varB) {
-                comparison = 1;
-            } else if (varA < varB) {
-                comparison = -1;
-            }
+    let handleLoadPeople = () => {
+        fetch('https://ghibliapi.herokuapp.com/people')
+        .then(resolve => resolve.json())
+        .then(resolve => setPeople(resolve))
+        
+        setLoadFilms(false)
+        setLoadPeople(true)
+    }
+    <BrowserRouter>
+    <Switch>
+        <Route exact path="/">
+            {() => <h1>home</h1>}
+        </Route>
+        <Route exact path="/films">
+            {() => <h1>explore films</h1>}
+        </Route>
+        <Route exact path="/people">
+            {() => <h1>explore people</h1>}
+        </Route>
+        <Route exact path="/people/:personid">
+            {() => <h1>character bio</h1>}
+        </Route>
+        <Route path="*">
+            {() => <h1>404: page not found</h1>}
+        </Route>
+    </Switch>
+    </BrowserRouter>
+    if (loadFilms == false && loadPeople == false) {
+        return (
+            <>
+            <button onClick={() => handleLoadFilms()}>explore films</button>
+            <button onClick={() => handleLoadPeople()}>explore people</button>
+            studio ghilbi
+            </>
+        )
+    } else if (loadFilms == true) {
+        return (
+            <>
+            <button onClick={() => handleLoadFilms()}>explore films</button>
+            <button onClick={() => handleLoadPeople()}>explore people</button>
+            {films.map(film => (
+                <Films film ={film} />
+            ))}
+            </>
+        )
+        } else if (loadPeople == true) {
             return (
-                (order === 'desc') ? (comparison * -1) : comparison
-            );
-        };
-    }
-    let arr = this.state.films;
-    console.log(arr);
-
-    //conditional to delineate sorting types
-    if (num === 1) {
-        arr.sort(compareValues('title'));
-        //console.dir('after sort: ' + arr[2].title);
-
-        this.setState({
-            films: arr
-        })
-    } else if (num === 2) {
-        arr.sort(compareValues('title', 'desc'));
-
-        this.setState({
-            films: arr
-        })
-    } else if (num === 3) {
-        arr.sort(compareValues('release_date'));
-
-        this.setState({
-            films: arr
-        })
-    } else if (num === 4) {
-        arr.sort(compareValues('release_date', 'desc'));
-
-        this.setState({
-            films: arr
-        })
-    } else {
-        console.log('sorting error');
+                <>
+                <button onClick={() => handleLoadFilms()}>explore films</button>
+                <button onClick={() => handleLoadPeople()}>explore people</button> 
+                {people.map(person => (
+                    <People person ={person} />
+                ))};
+                </>
+            )
     }
 
 }
 
-render() {
-    // console.log(this.state.films);
-    return (
-        <div className="App">
-            <h2 className="App-header">
-                React API Fetch - Studio Ghibli API
-            </h2>
 
-            <div id="instructions-container">
-                <h2 className="instructions">
-                    ***click movie image to see info***
-                </h2>
-            </div>
-
-            <div className="card-container">
-                <List slideBack={this.slideBack} slide={this.slide} films={this.state.films} height={this.state.heightChange} opacity={this.state.opacityChange} transition={this.state.transition} />
-            </div>
-
-        </div>
-    );
-}
-}
-
-//     useEffect(() => {
-//         fetch('https://ghibliapi.herokuapp.com/films')
-//         .then(response => response.json())
-//         .then(allUsers => setUsers(allUsers))
-//     }, []);
-
-//     return (
-//         <main className="container">
-//             <section className="row justify-content-center mt5-5">
-//             {users.map(user =>(
-//                 <div className="col-md-6" key={`user-card-${user.id}`}>
-//                     <div className="card shadow my-2">
-//                         <div className="card-body">
-//                             <h4 className="card-title">{user.username}</h4>
-//                             <p className="card-subtitle text-muted">{user.name}</p>
-//                             <p className="card-text">{user.email}</p>
-//                         </div>
-//                     </div>
-//                 </div>
-//             ))}
-//             <h1>hello there! </h1>
-//             </section>
-//         </main>
-//     );
-// };
 export default App;
